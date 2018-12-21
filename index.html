@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="css/pure-min.css" rel="stylesheet" />
+    <script src="js/vue.min.js"></script>
+    <script>
+        window.languagePluginUrl = window.location.origin + "/pyodide/";
+        document.addEventListener("DOMContentLoaded", function(event) {
+            var app = new Vue({
+                el: '#app',
+                data: {
+                    loaded: false,
+                    load_status: "Downloading a bunch of compile WASM & JS files ...",
+                    code: "test: public(uint256)",
+                    compiled_output: {},
+                    vyper_version: "<not loaded>",
+                },
+                methods: {
+                    init_vyper: function() {
+                        var _this = this;
+                        this.load_status = "Loading pyodide (python interpreter)...";
+                        languagePluginLoader.then(() => {
+                            // pyodide is now ready to use...
+                            this.load_status = "Loading vyper module...";
+                            pyodide.loadPackage(["vyper"]).then(() => {
+                                 this.load_status = "Vyper loaded!";
+                                this.vyper_version = pyodide.runPython('import vyper; vyper.__version__');
+                                pyodide.runPython('from vyper import compile_code');
+                                _this.loaded = true;
+                            });
+                        });
+                    },
+                    compile: function() {
+                        // console.log(pyodide.runPython('import vyper; vyper.__version__; from vyper.compiler import compile_code'));
+                        // console.log(pyodide.runPython('compile_code("a: public(uint256)", ["abi", "bytecode"])'));
+                        try {
+                            this.compiled_output = {};
+                            var out = pyodide.runPython('compile_code("""' + this.code + '""", ["abi", "bytecode"])');
+                            this.compiled_output = out;
+                        } catch (error) {
+                            this.compiled_output.error = error.message;
+                        }
+                    }
+                },
+                mounted: function() {
+                    this.init_vyper();
+                }
+            });
+        });
+    </script>
+    <script src="pyodide/pyodide.js"></script>
+    <style>
+        #bottom_container {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: justify;
+            -ms-text-justify: distribute-all-lines;
+            text-justify: distribute-all-lines;
+        }
+        textarea {
+            min-width: 600px;
+            min-height: 200px
+        }
+        code {
+            border: 1px solid #eee;
+            margin: 1em;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+
+<html>
+
+<div id="app">
+    <div v-show="!loaded">
+        {{ load_status }}
+    </div>
+    <div v-show="loaded">
+        <h3> Vyper Code </h3>
+        <textarea v-model="code"></textarea><br>
+        <a class="pure-button pure-button-primary" v-on:click="compile">Compile</a><br>
+
+        <b v-model="compiled_output" style="min-width: 600px; min-height: 200px"></b>
+
+        <div v-if="compiled_output.error !== undefined">
+            <h4>Error</h4>
+            <pre> {{ compiled_output.error }} </pre>
+        </div>
+
+        <div v-if="compiled_output.abi !== undefined">
+            <h4>ABI</h4>
+            <code > {{ compiled_output.abi }} </code>
+        </div>
+
+        <div v-if="compiled_output.bytecode !== undefined">
+            <h4>Bytecode</h4>
+            <code > {{ compiled_output.bytecode }} </code>
+        </div>
+
+        <div id="bottom_container">
+            Vyper Version: {{ vyper_version }}
+        </div>
+    </div>
+
+</div>
+
+</html>

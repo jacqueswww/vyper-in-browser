@@ -1,0 +1,1 @@
+{"dependencies": {"pyparsing": [], "pysha3": [], "vyper": ["setuptools", "pysha3"], "setuptools": ["pyparsing"], "test": []}, "import_name_to_package_name": {"pyparsing": "pyparsing", "sha3": "pysha3", "vyper": "vyper", "setuptools": "setuptools", "easy_install": "setuptools", "pkg_resources": "setuptools"}}
