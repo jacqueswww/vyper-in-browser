@@ -1,4 +1,4 @@
-# vyper-in-browser
+# Vyper in your browser
 Vyper running straight in your Browser, thanks to pyodide &amp; wasm.
 
 Run it right away: https://jacqueswww.github.io/vyper-in-browser/  
